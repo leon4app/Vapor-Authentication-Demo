@@ -12,6 +12,12 @@ public func routes(_ router: Router) throws {
         return "Hello, world!"
     }
 
+    let userController = UserController()
+    router.get("users", use: userController.index)
+    router.post("addUser", use: userController.create)
+    router.post("login", use: userController.verify)
+    router.delete("user", User.parameter, use: userController.delete)
+    
     // Example of configuring a controller
     let todoController = TodoController()
     router.get("todos", use: todoController.index)
