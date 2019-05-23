@@ -16,11 +16,25 @@ final class User: SQLiteModel {
     
     var password: String
     
+    var token: String?
+    
     /// Creates a new `User`.
     init(id: Int? = nil, username: String, password: String) {
         self.id = id
         self.username = username
         self.password = password
+    }
+    
+    final class Public: Codable {
+        
+        var username: String
+        
+        var token: String?
+        
+        init(username: String, token: String?) {
+            self.username = username
+            self.token = token
+        }
     }
 }
 
@@ -32,3 +46,19 @@ extension User: Content { }
 
 /// Allows `User` to be used as a dynamic parameter in route definitions.
 extension User: Parameter { }
+
+extension User.Public: Content {}
+
+extension User {
+    func toPublic() -> User.Public {
+        return User.Public(username: username, token: token)
+    }
+}
+
+extension Future where T: User {
+    func toPublic() -> Future<User.Public> {
+        return map(to: User.Public.self) { (user) in
+            return user.toPublic()
+        }
+    }
+}

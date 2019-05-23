@@ -4,24 +4,26 @@
 //
 //  Created by Leon Tse on 2019/5/14.
 //
-
+import Crypto
 import Vapor
 /// Controls basic CRUD operations on `User`s.
 final class UserController {
     /// Returns a list of all `User`s.
-    func index(_ req: Request) throws -> Future<[User]> {
-        return User.query(on: req).all()
+    func index(_ req: Request) throws -> Future<[User.Public]> {
+        return User.query(on: req).decode(data: User.Public.self).all()
     }
     
     /// Saves a decoded `User` to the database.
-    func create(_ req: Request) throws -> Future<User> {
+    func create(_ req: Request) throws -> Future<User.Public> {
         return try req.content.decode(User.self).flatMap { user in
-            return user.save(on: req)
+            user.password = try BCrypt.hash(user.password)
+            return user.save(on: req).toPublic()
         }
     }
     
     func verify(_ req: Request) throws -> Future<String> {
         return try req.content.decode(User.self).flatMap { us in
+            us.password = try BCrypt.hash(us.password)
             return User.query(on: req).filter(\.username, .equal, us.username).all().flatMap { (users) -> EventLoopFuture<String> in
                 let result = req.eventLoop.newPromise(String.self)
                 if users.isEmpty {
